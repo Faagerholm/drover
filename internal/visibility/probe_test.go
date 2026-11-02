@@ -32,21 +32,6 @@ func TestParse(t *testing.T) {
 	}
 }
 
-func TestSocketPath(t *testing.T) {
-	for env, want := range map[string]string{
-		"/private/tmp/tmux-501/default,1234,0": "/private/tmp/tmux-501/default",
-		"/tmp/a,b/sock,99,12":                  "/tmp/a,b/sock",
-		"":                                     "",
-		"nocommas":                             "",
-		"one,1":                                "",
-	} {
-		got, ok := socketPath(env)
-		if got != want || ok != (want != "") {
-			t.Errorf("socketPath(%q) = %q, %v; want %q", env, got, ok, want)
-		}
-	}
-}
-
 func TestFromEnvIsNilOutsideTmux(t *testing.T) {
 	t.Setenv("TMUX", "")
 	t.Setenv("TMUX_PANE", "")

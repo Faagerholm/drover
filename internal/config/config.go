@@ -66,6 +66,11 @@ type Config struct {
 	// by default: tab and shift+tab do it in the list. Like ContextKey, a
 	// function key is the safe choice.
 	NextKey string `toml:"next_key"`
+	// NavKeys moves between the list and the pane with ctrl+h and ctrl+l,
+	// and hands ctrl+hjkl to the user's tmux at drover's edges, like
+	// vim-tmux-navigator. On by default; in focus mode it takes those keys
+	// from the agent, so false gives them back.
+	NavKeys bool `toml:"nav_keys"`
 	// Contexts group the list into the things you work on one at a time: only
 	// the active one is shown. Without any, every org is a context of its own.
 	Contexts []Context `toml:"context"`
@@ -85,7 +90,7 @@ type Config struct {
 }
 
 func Default() Config {
-	return Config{AgentCmd: "claude", Socket: "drover", Icons: "unicode", Background: true, Mouse: true, ZoomKey: DefaultZoomKey, SwitchKey: DefaultSwitchKey, ContextKey: DefaultContextKey}
+	return Config{AgentCmd: "claude", Socket: "drover", Icons: "unicode", Background: true, Mouse: true, NavKeys: true, ZoomKey: DefaultZoomKey, SwitchKey: DefaultSwitchKey, ContextKey: DefaultContextKey}
 }
 
 func Path() string {
@@ -134,6 +139,19 @@ func Load(path string) (Config, error) {
 	cfg.NextKey = strings.ToLower(strings.TrimSpace(cfg.NextKey))
 	if k := cfg.NextKey; k == cfg.ZoomKey || k == cfg.SwitchKey || k == cfg.ContextKey || k == `ctrl+\` || k == "ctrl+q" || isJumpKey(k) {
 		cfg.NextKey = "" // taken by something else: no key rather than a clash
+	}
+	if cfg.NavKeys { // ctrl+hjkl are taken by navigation: no key rather than a clash
+		for _, k := range []*string{&cfg.ContextKey, &cfg.NextKey} {
+			if isNavKey(*k) {
+				*k = ""
+			}
+		}
+		if isNavKey(cfg.SwitchKey) {
+			cfg.SwitchKey = DefaultSwitchKey
+		}
+		if isNavKey(cfg.ZoomKey) {
+			cfg.ZoomKey = DefaultZoomKey
+		}
 	}
 	var contexts []Context
 	for _, c := range cfg.Contexts {
@@ -224,6 +242,15 @@ func isJumpKey(k string) bool {
 		if rest, ok := strings.CutPrefix(k, prefix); ok && len(rest) == 1 && rest[0] >= '1' && rest[0] <= '9' {
 			return true
 		}
+	}
+	return false
+}
+
+// isNavKey is one of the ctrl+hjkl that nav_keys takes.
+func isNavKey(k string) bool {
+	switch k {
+	case "ctrl+h", "ctrl+j", "ctrl+k", "ctrl+l":
+		return true
 	}
 	return false
 }

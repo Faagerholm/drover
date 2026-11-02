@@ -25,6 +25,7 @@ func mouseModel(t *testing.T) Model {
 	t.Cleanup(func() { _ = m.tmux.KillServer() })
 	m.cfg.Projects = []string{"/k/infra", "/o/tools"}
 	m.width, m.height = 120, 30
+	m.selectOuter = func(string) error { return nil } // never the developer's own tmux
 	return m
 }
 

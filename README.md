@@ -46,6 +46,7 @@ background = true     # paint the list, title bar and footer in the theme colour
 mouse = true           # click and wheel support; false leaves the mouse to the terminal
 zoom_key = "ctrl+z"    # focus mode: zoom the pane to the whole terminal, and back
 next_key = ""          # optional key for the next agent that needs you (shift+ for the previous)
+nav_keys = true        # ctrl+hjkl: list <-> pane, and on to your tmux panes (see Navigation)
 context_key = ""       # optional key for the next context (shift+ for the previous), e.g. "f11"
 switch_key = "f12"     # opens the view switcher (agents, terminal, editor); F1-F9 jump
 terminal_cmd = ""      # `T`: defaults to $SHELL
@@ -68,6 +69,7 @@ Press `?` in drover for the full list. The main ones:
 | `←/h` `→/l`         | collapse / expand the section you are in                               |
 | `F`                 | fold every section, or unfold them all                                 |
 | `ctrl+\` / `ctrl+q` | leave focus mode (every other key goes to the pane)                    |
+| `ctrl+h` / `ctrl+l` | list ↔ pane; at drover's edges, and with `ctrl+j`/`ctrl+k`, on to your tmux panes (`nav_keys`) |
 | `ctrl+z`            | in focus mode: zoom the pane to the whole terminal, and back           |
 | `F12`               | open the switcher popup; `←`/`→` change its scope (views, worktrees, projects, contexts), `F12`/`↑↓` choose, `enter` goes, `esc` cancels (list and focus mode) |
 | `V`                 | review the changes in lazygit (also `:review`), like `G` |
@@ -166,6 +168,23 @@ passes the wheel and page keys to them instead.
 moves the list or scrolls the pane. Capturing the mouse stops the terminal's
 own text selection (kitty: hold `shift` to select); `mouse = false` turns it
 off.
+
+**Navigation.** `ctrl+l` focuses the pane from the list and `ctrl+h` goes
+back, like moving between vim splits. At drover's edges (`ctrl+h` in the
+list, `ctrl+l` in the pane, `ctrl+j`/`ctrl+k` anywhere) drover hands the key
+to your own tmux, which moves to the neighbouring pane. With
+[vim-tmux-navigator](https://github.com/christoomey/vim-tmux-navigator) in
+tmux, add drover to the programs it passes the keys to:
+
+```tmux
+set -g @vim_navigator_pattern '(\S+/)?g?\.?(view|l?n?vim?x?|fzf|drover)(diff)?(-wrapped)?'
+```
+
+Handing off needs drover in a tmux split: run in a popup, drover is the only
+pane there, so the edge keys go nowhere. Outside tmux only `ctrl+h` and
+`ctrl+l` are taken. In focus mode the keys drover takes never reach the agent
+(Claude Code's `ctrl+j` newline included) or an
+editor in the pane; `nav_keys = false` gives them back.
 
 **When nobody is looking.** Inside tmux, drover pauses all polling while its
 popup or window is hidden, and resumes at once when it is shown again. With
