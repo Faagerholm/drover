@@ -21,6 +21,15 @@ func TestIconsDefaultsAndParsing(t *testing.T) {
 		return cfg
 	}
 
+	if !Default().NavKeys || load(`agent_cmd = "claude"`).NavKeys != true || load(`nav_keys = false`).NavKeys {
+		t.Error("nav_keys must default to true and honour false")
+	}
+	if c := load("next_key = \"ctrl+j\"\ncontext_key = \"ctrl+k\"\nzoom_key = \"ctrl+l\"\nswitch_key = \"ctrl+h\""); c.NextKey != "" || c.ContextKey != "" || c.ZoomKey != DefaultZoomKey || c.SwitchKey != DefaultSwitchKey {
+		t.Errorf("nav keys must not be bound to anything else: next %q context %q zoom %q switch %q", c.NextKey, c.ContextKey, c.ZoomKey, c.SwitchKey)
+	}
+	if c := load("nav_keys = false\nnext_key = \"ctrl+j\""); c.NextKey != "ctrl+j" {
+		t.Errorf("with nav_keys off ctrl+j is free: next %q", c.NextKey)
+	}
 	if got := Default().Icons; got != "unicode" {
 		t.Errorf("default icons = %q, want unicode", got)
 	}

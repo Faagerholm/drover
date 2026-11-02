@@ -95,6 +95,9 @@ type Model struct {
 	// worktree (see tree.go); folds is the set of collapsed header ids.
 	hdr   string
 	folds map[string]bool
+	// selectOuter moves to a pane in the user's own tmux (nav.go), nil
+	// outside one; a field so tests never touch a real tmux.
+	selectOuter func(dir string) error
 	// drag is the divider between the list and the pane (divider.go).
 	drag dividerDrag
 
@@ -194,7 +197,7 @@ func New(cfg config.Config) Model {
 	return Model{
 		cfg: cfg, tmux: tmux.New(cfg.Socket), send: newSender(), push: &pusher{}, wheel: &wheelBatch{},
 		gitWant: map[string]row{}, gitAt: map[string]int{}, vis: newVisibility(),
-		companions: map[string]bool{},
+		companions: map[string]bool{}, selectOuter: outerSelector(),
 	}
 }
 
@@ -613,6 +616,9 @@ func (m Model) handleKey(msg tea.KeyPressMsg) (tea.Model, tea.Cmd) {
 	if c, ok := m.scrollListKey(msg); ok {
 		return m, c
 	}
+	if next, cmd, ok := m.navListKey(key); ok {
+		return next, cmd
+	}
 	if step, jump, ok := m.switchKeyPressed(key); ok {
 		return m.switchView(step, jump)
 	}
@@ -806,12 +812,18 @@ func (m Model) killAll() (tea.Model, tea.Cmd) {
 	return m, m.refresh()
 }
 
-// handleFocusKey forwards everything to the agent except the way back.
+// leaveFocus goes back to the list.
+func (m Model) leaveFocus() (tea.Model, tea.Cmd) {
+	m.mode = modeList
+	// The agent may have changed files while you were typing to it.
+	return m, tea.Batch(m.startPreview(), m.readSelectedGit())
+}
+
+// handleFocusKey forwards everything to the agent except the way back and
+// the navigation keys.
 func (m Model) handleFocusKey(msg tea.KeyPressMsg) (tea.Model, tea.Cmd) {
 	if s := msg.String(); s == `ctrl+\` || s == "ctrl+q" {
-		m.mode = modeList
-		// The agent may have changed files while you were typing to it.
-		return m, tea.Batch(m.startPreview(), m.readSelectedGit())
+		return m.leaveFocus()
 	}
 	if step, jump, ok := m.switchKeyPressed(msg.String()); ok {
 		return m.switchView(step, jump)
@@ -829,6 +841,9 @@ func (m Model) handleFocusKey(msg tea.KeyPressMsg) (tea.Model, tea.Cmd) {
 	}
 	if msg.String() == m.zoomKey() {
 		return m.toggleZoom()
+	}
+	if next, cmd, ok := m.navFocusKey(msg.String()); ok {
+		return next, cmd
 	}
 	if c, ok := m.scrollFocusKey(msg); ok {
 		return m, c

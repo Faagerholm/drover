@@ -16,9 +16,10 @@ package visibility
 
 import (
 	"fmt"
-	"os"
 	"os/exec"
 	"strings"
+
+	"github.com/lnware/drover/internal/tmux"
 )
 
 // Probe reports whether drover can be seen. An error means the answer is
@@ -34,12 +35,11 @@ const format = "#{session_attached} #{window_active} #{window_zoomed_flag} #{pan
 // does not run inside tmux, in which case it is always visible and needs no
 // probing at all.
 func FromEnv() Probe {
-	socket, ok := socketPath(os.Getenv("TMUX"))
-	pane := os.Getenv("TMUX_PANE")
-	if !ok || pane == "" {
+	o, ok := tmux.OuterFromEnv()
+	if !ok {
 		return nil
 	}
-	return New(socket, pane)
+	return New(o.Socket, o.Pane)
 }
 
 // New probes the pane on the tmux server listening on socket (a path, as in
@@ -56,19 +56,6 @@ func New(socket, pane string) Probe {
 		}
 		return parse(string(out))
 	}
-}
-
-// socketPath extracts the socket from $TMUX, "socket,server-pid,session-id".
-// It is split from the right because the socket path may itself hold commas.
-func socketPath(env string) (string, bool) {
-	for range 2 {
-		i := strings.LastIndexByte(env, ',')
-		if i < 0 {
-			return "", false
-		}
-		env = env[:i]
-	}
-	return env, env != ""
 }
 
 func parse(out string) (bool, error) {

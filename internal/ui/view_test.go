@@ -49,6 +49,7 @@ func TestPreviewLinesPadsAndKeepsBottom(t *testing.T) {
 
 func testModel() Model {
 	m := New(config.Default())
+	m.selectOuter = func(string) error { return nil } // never the developer's own tmux
 	m.cfg.Projects = []string{"/p/infra"}
 	m.width, m.height = 120, 30
 	m.rows = []row{

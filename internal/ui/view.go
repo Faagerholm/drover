@@ -363,6 +363,7 @@ func (m Model) helpLines() []string {
 		{"ctrl+\\ / ctrl+q", "leave focus mode"},
 		{m.zoomKey(), "zoom the focused pane to the whole terminal, and back"},
 		{"V", "review the changes in lazygit (also :review); :pr shows what a pull request would hold"},
+		{"ctrl+h ctrl+l", "list <-> pane; at the edges, and ctrl+j/k, on to your tmux panes (nav_keys)"},
 		{"tab / shift+tab", "go to the next / previous agent that waits, finished or failed in this context (the list)"},
 		{":", "command line: ctx (switch context), wt (jump to a worktree), term, edit, new, config, reload, help, q"},
 		{m.switchKey(), "open the switcher: ←/→ views of this worktree, every worktree, every project (list and focus mode)"},
