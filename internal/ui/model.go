@@ -98,6 +98,8 @@ type Model struct {
 	// selectOuter moves to a pane in the user's own tmux (nav.go), nil
 	// outside one; a field so tests never touch a real tmux.
 	selectOuter func(dir string) error
+	// drag is the divider between the list and the pane (divider.go).
+	drag dividerDrag
 
 	// agents is the latest hook-reported state per session; prevStates is
 	// what the last read showed, so only real transitions notify.
@@ -227,7 +229,7 @@ type (
 )
 
 func (m Model) Init() tea.Cmd {
-	return tea.Batch(m.refresh(), scheduleTick(), readStatus(), scheduleGitTick(), loadFolds(), loadContext(), m.probeNow())
+	return tea.Batch(m.refresh(), scheduleTick(), readStatus(), scheduleGitTick(), loadFolds(), loadLayout(), loadContext(), m.probeNow())
 }
 
 func scheduleTick() tea.Cmd {
@@ -312,6 +314,12 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		return m, m.startPreview()
 	case prMsg:
 		return m.handlePRRead(msg)
+	case layoutLoaded:
+		if m.drag.touched || msg.width == m.drag.width {
+			return m, nil // the divider was used before the load: that wins
+		}
+		m.drag.width = msg.width
+		return m.relayout()
 	case foldsLoaded:
 		m.folds = msg.set
 		m.reselect()
