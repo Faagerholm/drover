@@ -86,6 +86,11 @@ func (m Model) handleMouse(msg tea.MouseMsg) (tea.Model, tea.Cmd) {
 	if _, ok := msg.(tea.MouseReleaseMsg); ok && m.drag.active {
 		return m.releaseDivider()
 	}
+	// A key mid-drag clears the selection, so a release that still finds it
+	// pressed is in a mode that takes the mouse.
+	if _, ok := msg.(tea.MouseReleaseMsg); ok && m.sel.pressed {
+		return m.releaseSelection()
+	}
 	// Prompts, popups and help own the screen; a stray click must not act
 	// under them. Only the list and focus mode take the mouse, so a new mode
 	// is safe until it opts in. The lazygit popup ignores the mouse too.
@@ -94,6 +99,7 @@ func (m Model) handleMouse(msg tea.MouseMsg) (tea.Model, tea.Cmd) {
 	}
 	switch msg.(type) {
 	case tea.MouseWheelMsg:
+		m.sel = selection{}
 		if mouse.Button == tea.MouseWheelUp || mouse.Button == tea.MouseWheelDown {
 			return m.handleWheel(m.hit(mouse.X, mouse.Y), mouse.Button == tea.MouseWheelUp)
 		}
@@ -101,14 +107,22 @@ func (m Model) handleMouse(msg tea.MouseMsg) (tea.Model, tea.Cmd) {
 		if mouse.Button != tea.MouseLeft {
 			return m, nil
 		}
+		m.sel = selection{}
 		if m.onDivider(mouse.X, mouse.Y) {
 			return m.pressDivider(time.Now())
 		}
 		m.drag.active = false // a release we never saw: this press is not a drag
-		return m.handleClick(m.hit(mouse.X, mouse.Y))
+		h := m.hit(mouse.X, mouse.Y)
+		if key, ok := m.selectable(h); ok {
+			return m.pressSelection(key, h, mouse.X, mouse.Y) // a click once released; see select.go
+		}
+		return m.handleClick(h)
 	case tea.MouseMotionMsg:
 		if m.drag.active && mouse.Button == tea.MouseLeft {
 			return m.dragDivider(mouse.X)
+		}
+		if m.sel.pressed && mouse.Button == tea.MouseLeft {
+			return m.dragSelection(mouse.X, mouse.Y)
 		}
 	}
 	return m, nil // other releases and motion carry nothing we use

@@ -180,6 +180,11 @@ func (m Model) scrollRule() string {
 // (without the agent's cursor, which belongs to the live screen), else the
 // live capture.
 func (m Model) paneLines(w, rows int) []string {
+	return m.highlight(m.capturedLines(w, rows), w)
+}
+
+// capturedLines is paneLines without the selection drawn on it.
+func (m Model) capturedLines(w, rows int) []string {
 	if m.scrolled() && m.scroll.capOK {
 		return previewLines(preview{cap: m.scroll.cap}, w, rows, false)
 	}
