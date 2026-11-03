@@ -100,6 +100,8 @@ type Model struct {
 	selectOuter func(dir string) error
 	// drag is the divider between the list and the pane (divider.go).
 	drag dividerDrag
+	// sel is the text being selected in the pane (select.go).
+	sel selection
 
 	// agents is the latest hook-reported state per session; prevStates is
 	// what the last read showed, so only real transitions notify.
@@ -385,6 +387,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		}
 		return m, m.refresh()
 	case tea.KeyPressMsg:
+		m.sel = selection{}
 		switch m.mode {
 		case modeFocus:
 			return m.handleFocusKey(msg)

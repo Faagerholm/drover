@@ -170,8 +170,13 @@ mode, a click on another row moves the focus there); a click on a header
 folds it. The wheel moves the list or scrolls the pane. Drag the divider
 between the list and the pane to resize the list; the width is kept across
 restarts, and a double-click on the divider goes back to `list_width`.
-Capturing the mouse stops the terminal's own text selection (kitty: hold
-`shift` to select); `mouse = false` turns it off.
+Capturing the mouse stops the terminal's own text selection, so drover
+selects in the pane itself: drag over the agent's output and the selection
+(partial lines too) is copied on release, with OSC 52. Inside tmux that needs
+`set -g set-clipboard on`. What is copied is what the pane shows, so lines the
+program wrapped come out as separate lines; scroll first to reach text above.
+Holding `shift` (kitty, Ghostty) still gives the terminal's own selection, and
+`mouse = false` turns mouse capture off.
 
 **Navigation.** `ctrl+l` focuses the pane from the list and `ctrl+h` goes
 back, like moving between vim splits. At drover's edges (`ctrl+h` in the

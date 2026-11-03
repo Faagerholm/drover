@@ -370,7 +370,7 @@ func (m Model) helpLines() []string {
 		{"f1-f9 / ctrl+1-9", "go straight to view 1-9, starting the terminal or editor if needed"},
 		{"PgUp PgDn", "scroll output back (list: also ctrl+u/d)"},
 		{"End q esc", "back to live output"},
-		{"mouse", "click focuses, wheel scrolls, drag the divider to resize (double-click resets)"},
+		{"mouse", "click focuses, wheel scrolls, drag in the pane copies, drag the divider to resize (double-click resets)"},
 		{"n", "new worktree in this project"},
 		{"N", "new agent session in this worktree: asks for a name (empty: named after the branch)"},
 		{"/", "search; filters as you type (enter keeps, esc clears)"},
